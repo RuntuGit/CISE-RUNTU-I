@@ -1,0 +1,53 @@
+#include <XBee.h>
+
+// Create an XBee object
+XBee xbee = XBee();
+
+// Create an API frame object
+TxRequest tx = TxRequest(0x0013A2004221248B, 0xFFFE, (uint8_t*)"data", 4);
+
+void setup() {
+  // Initialize the serial port
+  Serial.begin(9600);
+
+  // Initialize the XBee object
+  xbee.setSerial(Serial);
+}
+
+void loop() {
+  // Encode the data as a JSON string
+  String data = "{\"P\": \"34\", \"T\": \"34\", \"O_x\": \"34\", \"O_y\": \"34\", \"O_z\": \"34\", \"Ac\": \"34\"}";
+
+  // Convert the string to a char array
+  char payload[data.length()+1];
+  data.toCharArray(payload, data.length()+1);
+
+  // Set the payload of the API frame
+  tx.setPayload(payload, sizeof(payload));
+
+  // Send the API frame
+  xbee.send(tx);
+
+  // Wait for a response
+  XBeeResponse response = xbee.getResponse();
+
+  // Print the response
+  if (response.isError()) {
+    Serial.print("Error: ");
+    Serial.println(response.getError());
+  } else {
+    Serial.print("Sent data to 64-bit address ");
+    Serial.print(tx.getRemoteAddress64(), HEX);
+    Serial.print(" and 16-bit address ");
+    Serial.print(tx.getRemoteAddress16(), HEX);
+    Serial.print(". Response: ");
+    for (int i = 0; i < response.getDataLength(); i++) {
+      Serial.write(response.getData()[i]);
+    }
+    Serial.println();
+  }
+
+  // Wait for some time before sending the next message
+  delay(1000);
+}
+
